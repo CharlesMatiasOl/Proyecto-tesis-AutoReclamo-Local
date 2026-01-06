@@ -3,7 +3,10 @@
 Plataforma full stack para centralizar y agilizar la gestión de reclamos de terceros (siniestros), con carga de reclamos, seguimiento y panel administrativo para control operativo.
 
 ## Demo 
-- Demo:
+- Demo:https://autoreclamo-frontend.vercel.app/
+
+<img width="945" height="612" alt="image" src="https://github.com/user-attachments/assets/41335cdd-bcc7-429a-aa0f-1df5d417cf10" />
+<img width="945" height="469" alt="image" src="https://github.com/user-attachments/assets/fd846b2c-391f-4b80-b5d0-4d8c5a7d5f7b" />
 
 
 ## Funcionalidades
