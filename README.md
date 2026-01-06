@@ -30,3 +30,11 @@ Plataforma full stack para centralizar y agilizar la gestión de reclamos de ter
 ## Requisitos
 - Node.js (versión recomendada: 18+)
 - Base de datos (MySQL o PostgreSQL según tu setup)
+
+## Instalación
+Clonar el repo e instalar dependencias:
+
+```bash
+git clone <https://github.com/CharlesMatiasOl/Proyecto-tesis-AutoReclamo-Local.git>
+cd <Proyecto-Tesis-AutReclamo-Local>
+npm install
