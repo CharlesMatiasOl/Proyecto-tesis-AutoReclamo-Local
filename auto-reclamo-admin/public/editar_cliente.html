@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Editar Cliente</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Iconos (FontAwesome via CDN) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="estilos/styles.css">
+  <link rel="icon" type="image/png" href="img/ico.png">
+
+</head>
+<body>
+  <div class="wrapper">
+    <!-- Sidebar de navegación -->
+    <aside class="sidebar">
+      <div class="brand">
+        <i class="fas fa-car-crash"></i>
+        <span>AdminReclamos</span>
+      </div>
+
+      <!-- Menú lateral -->
+      <nav class="menu">
+        <a href="index.html">
+          <i class="fas fa-chart-pie"></i><span>Dashboard</span>
+        </a>
+        <a href="clientes.html" class="active">
+          <i class="fas fa-users"></i><span>Clientes</span>
+        </a>
+        <a href="reclamos.html">
+          <i class="fas fa-file-alt"></i><span>Reclamos</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Contenido principal -->
+    <div class="main">
+      <!-- Encabezado de página -->
+      <header class="main-header">
+        <h1><i class="fas fa-edit"></i> Editar Cliente</h1>
+        <!-- Volver al listado de clientes -->
+        <button onclick="location.href='clientes.html'" class="btn-hero solid">
+          <i class=""></i> Volver
+        </button>
+      </header>
+
+      <main>
+        <!-- Tarjeta/contendor del formulario -->
+        <div class="form-card">
+          <!-- Form de edición (admin.js completa y envía) -->
+          <form id="form-editar-cliente" class="grid-2">
+            
+            <input type="hidden" id="id">
+
+            <!-- Nombre y Apellido -->
+            <div class="form-group">
+              <label for="nombre">Nombre</label>
+              <input type="text" id="nombre" name="nombre" required>
+            </div>
+
+            <div class="form-group">
+              <label for="apellido">Apellido</label>
+              <input type="text" id="apellido" name="apellido" required>
+            </div>
+
+            <!-- DNI y Teléfono -->
+            <div class="form-group">
+              <label for="dni">DNI</label>
+              <input type="text" id="dni" name="dni" required>
+            </div>
+
+            <div class="form-group">
+              <label for="telefono">Teléfono</label>
+              <input type="tel" id="telefono" name="telefono">
+            </div>
+
+            <!-- Email  -->
+            <div class="form-group full-width">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" required>
+            </div>
+
+            
+            <button type="submit" class="btn-hero solid full-width">
+              <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Lógica del panel  -->
+  <script type="module" src="scripts/admin.js"></script>
+</body>
+</html>

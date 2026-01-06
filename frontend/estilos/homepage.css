@@ -1,0 +1,360 @@
+/* -------------------------------------------------ESTILOS EXCLUSIVOS PARA INDEX.HTML-------------------------------------------------*/
+
+/*Hero central*/
+.hero {
+  background: 
+    linear-gradient(135deg, rgba(0, 0, 51, 0.9) 0%, rgba(0, 122, 192, 0.8) 100%);
+    /*url('../img/hero.jpg') center/cover no-repeat;*/
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  color: white;
+}
+
+
+
+.hero-content {
+  width: 100%;
+  padding: 0 5%;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.hero-text {
+  max-width: 700px;
+}
+
+.hero-text h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+  color: white;
+}
+
+.hero-text p {
+  font-size: 1.25rem;
+  max-width: 600px;
+  margin-bottom: 2.5rem;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+  color: white;
+}
+
+/* Contenedor de botones */
+.hero-buttons {
+  display: flex;
+  gap: 5px;
+  flex-wrap:nowrap;
+}
+
+/* Botones mejorados */
+.hero-buttons .btn {
+  padding: 12px 20px;
+  border-radius: 30px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  flex: 1;
+  min-width: 200px;
+  text-align: center;
+}
+
+.btn-outline {
+  border: 2px solid white;
+  background: transparent;
+}
+
+.btn-outline:hover {
+  background: white;
+  color: var(--color-primario);
+}
+
+/* Efectos interactivos */
+.hero-buttons .btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* codigo antiguo seciones
+
+/* Secciones de info 
+.info-seccion {
+  padding: 60px 0;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  margin-top: 40px;
+  justify-items: center;
+  text-align: center;
+}
+
+.info-paso, .beneficio-item {
+  text-align: center;
+}
+
+.info-paso i, .beneficio-item i {
+  color: var(--color-secundario);
+  margin-bottom: 15px;
+}
+
+.bg-light {
+  background-color: #f9f9f9;
+}
+
+/* Separación entre secciones 
+#como-funciona { padding-bottom: 80px; }
+#beneficios   { padding-top: 80px; }
+
+/* Títulos de secciones 
+.info-seccion h2 {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+/* Textos descriptivos 
+.info-seccion .grid-3 p {
+  margin-top: 12px;
+  line-height: 1.6;
+  color: #555;
+  max-width: 300px;
+}
+
+
+*/
+
+/* ---------------------------------------------- MEJORAS PARA LAS SECCIONES "CÓMO FUNCIONA" Y "BENEFICIOS  --------------------------------------------------- */
+
+/* Encabezado de sección mejorado */
+.section-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.section-header h2 {
+  font-size: 2.5rem;
+  color: var(--color-primario);
+  margin-bottom: 15px;
+  position: relative;
+  display: inline-block;
+}
+
+.section-header h2:after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70px;
+  height: 4px;
+  background: var(--color-secundario);
+  border-radius: 2px;
+}
+
+.section-header p {
+  font-size: 1.1rem;
+  color: #666;
+  max-width: 700px;
+  margin: 20px auto 0;
+}
+
+/* Tarjetas de proceso - Cómo funciona */
+.process-container {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 30px;
+}
+
+.process-step {
+  flex: 1;
+  min-width: 300px;
+  background: #fff;
+  border-radius: 15px;
+  padding: 40px 30px;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.process-step:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.process-step:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: var(--color-secundario);
+}
+
+.step-number {
+  display: inline-block;
+  width: 50px;
+  height: 50px;
+  background: var(--color-secundario);
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 50px;
+  border-radius: 50%;
+  margin-bottom: 25px;
+}
+
+.step-icon {
+  font-size: 3rem;
+  color: var(--color-secundario);
+  margin-bottom: 20px;
+}
+
+.process-step h3 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  color: var(--color-primario);
+}
+
+.process-step p {
+  color: #666;
+}
+
+/* Tarjetas de beneficios */
+.benefits-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.benefit-card {
+  background: #fff;
+  border-radius: 15px;
+  padding: 40px 30px;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.benefit-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.benefit-card:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: var(--color-secundario);
+}
+
+.benefit-icon {
+  width: 80px;
+  height: 80px;
+  background: rgba(0, 122, 192, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 25px;
+}
+
+.benefit-icon i {
+  font-size: 2.5rem;
+  color: var(--color-secundario);
+}
+
+.benefit-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  color: var(--color-primario);
+}
+
+.benefit-card p {
+  color: #666;
+}
+
+
+
+/* -------------------------------------------------CENTRAR ICONOS, TÍTULOS Y TEXTOS EN PASOS/BENEFICIOS-------------------------------------------------*/
+
+.info-seccion {
+  padding: 60px 0;
+}
+.info-seccion h2 {
+  text-align: center; margin-bottom: 40px;
+}
+.info-seccion .grid-3 {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px; justify-items: center; text-align: center;
+}
+
+
+
+/* Responsive: hero + botones en móviles / tablets */
+@media (max-width: 768px) {
+
+  
+  .hero .container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0 16px;
+    box-sizing: border-box;
+  }
+
+  /* Hero un poco más bajo y con aire */
+  .hero {
+    min-height: auto;
+    padding: 24px 0 32px;
+  }
+
+  .hero-text {
+    text-align: center;      
+  }
+
+  /* 👉 Texto más chico y armonioso en móvil */
+  .hero-text h1 {
+    font-size: 1.8rem;     /* antes 3rem */
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+
+  .hero-text p {
+    font-size: 1rem;       /* un poquito más chico */
+    line-height: 1.5;
+    margin-bottom: 1.8rem;
+  }
+
+  /* Botones del hero: columna, centrados y con ancho cómodo */
+  .hero-buttons {
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-buttons .btn {
+    width: 100%;
+    max-width: 320px;   /* así no se ven gigantes */
+    min-width: 0;
+    margin: 0 auto;
+    display: block;
+    text-align: center;
+  }
+}

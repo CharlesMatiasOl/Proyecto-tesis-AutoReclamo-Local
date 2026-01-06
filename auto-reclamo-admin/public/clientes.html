@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard – Clientes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Iconos (FontAwesome via CDN) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="estilos/styles.css">
+  <link rel="icon" type="image/png" href="img/ico.png">
+
+</head>
+<body>
+  <div class="wrapper">
+    <!-- Sidebar de navegación -->
+    <aside class="sidebar">
+      <div class="brand">
+        <i class="fas fa-car-crash"></i>
+        <span>AdminReclamos</span>
+      </div>
+
+      <!-- Menú lateral -->
+      <nav class="menu">
+        <a href="index.html">
+          <i class="fas fa-chart-pie"></i><span>Dashboard</span>
+        </a>
+        <a href="clientes.html" class="active">
+          <i class="fas fa-users"></i><span>Clientes</span>
+        </a>
+        <a href="reclamos.html?mode=all">
+          <i class="fas fa-file-alt"></i><span>Reclamos</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Contenido principal -->
+    <div class="main">
+      
+      <header class="main-header">
+        <h1>Gestión de Clientes</h1>
+        
+        <button onclick="location.href='index.html'" class="btn-hero solid">
+          <i class=""></i> Inicio
+        </button>
+      </header>
+
+      <main class="container">
+        <!-- Tabla de clientes  -->
+        <table class="clients-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Apellido</th>
+              <th>DNI</th>
+              <th>Teléfono</th>
+              <th>Email</th>
+              <th>Acciones</th> 
+            </tr>
+          </thead>
+          <tbody id="clients-tbody">
+            <!-- Filas inyectadas por scripts/admin.js -->
+          </tbody>
+        </table>
+      </main>
+    </div>
+  </div>
+
+  <!-- Lógica de administración -->
+  <script src="scripts/admin.js"></script>
+</body>
+</html>

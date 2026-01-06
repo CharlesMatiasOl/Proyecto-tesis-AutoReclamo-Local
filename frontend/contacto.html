@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Contacto - AutoReclamo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Ponte en contacto con nosotros en AutoReclamo">
+  <link rel="stylesheet" href="estilos/styles.css">
+  <!-- JS global -->
+  <script src="scripts/scripts.js" defer></script>
+  <link rel="icon" href="img/ico.png">
+</head>
+<body>
+  <!-- Header: logo + nav -->
+  <header>
+    <div class="container">
+      <div class="logo">
+        <img src="img/logo.png" alt="Logo AutoReclamo">
+      </div>
+      <nav>
+        <ul>
+          <li><a href="index.html">INICIO</a></li>
+          <li><a href="contacto.html">CONTACTO</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Sección de formulario de contacto -->
+    <section id="contactoFormulario" class="formulario">
+      <div class="container">
+        <h1>Queremos escucharte</h1>
+
+        
+        <form id="formContacto" novalidate>
+          <!-- Motivo -->
+          <div class="form-group">
+            <label for="motivoConsulta">Seleccioná el motivo de tu consulta</label>
+            <select id="motivoConsulta" name="motivoConsulta" required>
+              <option value="" disabled selected>Seleccionar</option>
+              <option value="Reclamo">Reclamo</option>
+              <option value="Consulta">Consulta</option>
+              <option value="Sugerencia">Sugerencia</option>
+            </select>
+            <div id="motivoConsultaError" class="error-message"></div>
+          </div>
+
+          <!-- Nombre -->
+          <div class="form-group">
+            <label for="nombre">Nombre:</label>
+            <input
+              type="text"
+              id="nombre"
+              name="nombre"
+              required
+              pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,50}"
+              title="El nombre debe contener solo letras y espacios, y tener entre 2 y 50 caracteres."
+            >
+            <div id="nombreError" class="error-message"></div>
+          </div>
+
+          <!-- Apellidos -->
+          <div class="form-group">
+            <label for="apellidos">Apellidos:</label>
+            <input
+              type="text"
+              id="apellidos"
+              name="apellidos"
+              required
+              pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,50}"
+              title="Los apellidos deben contener solo letras y espacios, y tener entre 2 y 50 caracteres."
+            >
+            <div id="apellidosError" class="error-message"></div>
+          </div>
+
+          <!-- Email -->
+          <div class="form-group">
+            <label for="correo">Correo electrónico:</label>
+            <input type="email" id="correo" name="correo" required>
+            <div id="correoError" class="error-message"></div>
+          </div>
+
+          <!-- Confirmación de email -->
+          <div class="form-group">
+            <label for="confirmarCorreo">Confirmar el correo electrónico:</label>
+            <input type="email" id="confirmarCorreo" name="confirmarCorreo" required>
+            <div id="confirmarCorreoError" class="error-message"></div>
+          </div>
+
+          <!-- Comentario -->
+          <div class="form-group">
+            <label for="comentario">¿Cuál es tu comentario o consulta?:</label>
+            <textarea
+              id="comentario"
+              name="comentario"
+              rows="4"
+              required
+              minlength="10"
+              maxlength="500"
+              title="El comentario debe tener entre 10 y 500 caracteres."
+            ></textarea>
+            <div id="comentarioError" class="error-message"></div>
+          </div>
+
+          <!-- Acciones -->
+          <div class="buttons">
+            <button type="submit" class="btn-hero solid">Enviar</button>
+          </div>
+
+          <!-- Mensajes globales -->
+          <div id="mensajeContacto"></div>
+        </form>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

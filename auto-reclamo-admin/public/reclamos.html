@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reclamos de Cliente</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="estilos/styles.css">
+  <link rel="icon" type="image/png" href="img/ico.png">
+
+</head>
+<body>
+  
+  <div class="wrapper">
+    <!-- ===== Sidebar de navegación ===== -->
+    <aside class="sidebar">
+      <div class="brand">
+        <i class="fas fa-car-crash"></i><span>AdminReclamos</span>
+      </div>
+
+      <nav class="menu">
+        <a href="index.html"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+        <a href="clientes.html"><i class="fas fa-users"></i><span>Clientes</span></a>
+        <a href="reclamos.html" class="active"><i class="fas fa-file-alt"></i><span>Reclamos</span></a>
+      </nav>
+    </aside>
+
+    <!-- ===== Contenido principal ===== -->
+    <div class="main">
+      <header class="main-header">
+        <h1 id="titulo-reclamos">Reclamos</h1>
+        <!-- Botón rápido para ir a clientes -->
+        <button onclick="location.href='clientes.html'" class="btn-hero solid">
+          <i class=""></i> Clientes
+        </button>
+      </header>
+
+      <main>
+        <!-- Tabla de reclamos (llenada por scripts/admin.js) -->
+        <table id="tabla-reclamos" class="clients-table">
+          <thead>
+            <tr>
+              <th>ID Reclamo</th>
+              <th>Cliente</th>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Filas inyectadas dinámicamente -->
+          </tbody>
+        </table>
+
+        <!-- ===== Modal de comentarios del reclamo ===== -->
+        <div id="modal-comentarios" class="modal-overlay" aria-hidden="true">
+          <div class="modal">
+            <div class="modal-header">
+              <h3 id="modal-title">Comentarios del Reclamo</h3>
+              <!-- Cerrar modal -->
+              <button class="modal-close" id="btn-cerrar-modal" aria-label="Cerrar">&times;</button>
+            </div>
+
+            <div class="modal-body">
+              <!-- Form para crear comentario -->
+              <form id="form-comentario">
+                <div class="form-row">
+                  <label for="autor-comentario">Autor</label>
+                  <input type="text" id="autor-comentario" maxlength="100" placeholder="">
+                </div>
+                <div class="form-row">
+                  <label for="texto-comentario">Comentario</label>
+                  <textarea id="texto-comentario" rows="4" maxlength="1000"
+                            placeholder="Ej: Falta llamar a la aseguradora..."></textarea>
+                </div>
+                <div style="text-align: right; margin-top: 8px;">
+                  <button type="submit" class="btn-hero solid">Guardar comentario</button>
+                </div>
+              </form>
+
+              <hr style="margin: 16px 0; opacity:.25;">
+
+              <!-- Lista con historial de comentarios -->
+              <h4>Historial</h4>
+              <ul id="lista-comentarios" class="comentarios-lista">
+                <!-- Items inyectados por admin.js -->
+              </ul>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Lógica del panel -->
+  <script type="module" src="scripts/admin.js"></script>
+</body>
+</html>

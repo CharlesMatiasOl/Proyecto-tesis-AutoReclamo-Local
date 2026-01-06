@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Seguimiento de Reclamo - AutoReclamo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Consulta el estado de tu reclamo en AutoReclamo">
+
+  <link rel="stylesheet" href="estilos/styles.css">
+
+  
+  <link rel="icon" href="img/ico.png">
+</head>
+<body>
+  
+  <header>
+    <div class="container">
+      <div class="logo">
+        <img src="img/logo.png" alt="Logo AutoReclamo">
+      </div>
+      <nav>
+        <ul>
+          <li>
+            <a href="index.html">&#8592; VOLVER AL INICIO</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Paso 1: ingreso de código -->
+    <section id="seguimientoPaso1" class="formulario" aria-labelledby="tituloSeguimiento1">
+
+      <div class="container">
+        <h1 id="tituloSeguimiento1">Consulta de Reclamo</h1>
+        
+        <form id="consultaForm" novalidate>
+
+          <div class="form-group">
+            <label for="codigoReclamo">Código de Reclamo:</label>
+            <input type="text" id="codigoReclamo" name="codigoReclamo" required>
+            <div id="codigoReclamoError" class="error-message"></div>
+          </div>
+
+          <div class="buttons">
+            <button type="submit" class="btn-hero solid">Consultar</button>
+          </div>
+
+        </form>
+
+      </div>
+
+    </section>
+
+    <!-- Paso 2: progreso -->
+    <section id="seguimientoPaso2" class="formulario" style="display: none;" aria-labelledby="tituloSeguimiento2">
+      <div class="container">
+        <h1 id="tituloSeguimiento2">Estado de tu Reclamo</h1>
+
+        <!-- Tracker: resaltar el paso activo -->
+        <div class="progress-tracker">
+          <div class="step" data-step="1">
+            <div class="number">1</div>
+            <div class="title">Ingresado</div>
+            <div class="description">Tu reclamo fue recibido con éxito.</div>
+          </div>
+
+          <div class="step" data-step="2">
+            <div class="number">2</div>
+            <div class="title">En revisión</div>
+          </div>
+
+          <div class="step" data-step="3">
+            <div class="number">3</div>
+            <div class="title">Aprobación</div>
+          </div>
+
+          <div class="step" data-step="4">
+            <div class="number">4</div>
+            <div class="title">Reclamación</div>
+          </div>
+
+          <div class="step" data-step="5">
+            <div class="number">5</div>
+            <div class="title">Gestión de pago</div>
+          </div>
+
+          <div class="step" data-step="6">
+            <div class="number">6</div>
+            <div class="title">Reclamo finalizado</div>
+          </div>
+
+        </div>
+
+        <div class="buttons">
+          <button type="button" id="btnVolverConsulta" class="btn-hero solid">NUEVA CONSULTA</button>
+        </div>
+
+      </div>
+    </section>
+  </main>
+  <script src="scripts/scripts.js" defer></script>
+</body>
+</html>

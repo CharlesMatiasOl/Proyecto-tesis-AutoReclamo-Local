@@ -1,0 +1,18 @@
+{
+  "name": "auto-reclamo-admin",
+  "version": "1.0.0",
+  "description": "Dashboard de administración para AutoReclamo",
+  "main": "app.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node app.mjs",
+    "dev": "nodemon app.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Presentar Reclamo - AutoReclamo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Presenta tu reclamo de manera fácil y rápida en AutoReclamo">
+  <link rel="stylesheet" href="estilos/styles.css">
+  <!-- JS global -->
+  <script src="scripts/scripts.js" defer></script>
+  <link rel="icon" href="img/ico.png">
+</head>
+<body>
+
+  
+  <header>
+    <div class="container">
+      <div class="logo">
+        <img src="img/logo.png" alt="Logo AutoReclamo">
+      </div>
+      <nav>
+        <ul>
+          <li><a href="index.html">&#8592; VOLVER AL INICIO</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Paso 1: datos personales -->
+    <section id="paso1" class="formulario" aria-labelledby="tituloPaso1">
+      <div class="container">
+        <h1 id="tituloPaso1">Completa tus datos</h1>
+        
+        <form id="formPaso1" novalidate>
+          <div class="form-group">
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre" name="nombre" required>
+            <span class="error-message" id="nombreError"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="apellido">Apellido:</label>
+            <input type="text" id="apellido" name="apellido" required>
+            <span class="error-message" id="apellidoError"></span>
+          </div>
+
+          <!-- DNI/Cédula: 8 dígitos -->
+          <div class="form-group">
+            <label for="documento">Documento (DNI o Cédula):</label>
+            <input type="text" id="documento" name="documento" required pattern="\d{8}">
+            <span class="error-message" id="documentoError"></span>
+          </div>
+
+          <!-- Teléfono: 10 dígitos -->
+          <div class="form-group">
+            <label for="telefono">Teléfono móvil:</label>
+            <input type="tel" id="telefono" name="telefono" required pattern="\d{10}">
+            <span class="error-message" id="telefonoError"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+            <span class="error-message" id="emailError"></span>
+          </div>
+
+          <div class="buttons">
+            
+            <button type="button" id="btnPaso1" class="btn-hero solid">Siguiente</button>
+          </div>
+
+        </form>
+      </div>
+    </section>
+
+    <!-- Paso 2: datos del choque -->
+    <section id="paso2" class="formulario" style="display: none;" aria-labelledby="tituloPaso2">
+      <div class="container">
+        <h1 id="tituloPaso2">Datos del choque</h1>
+        <form id="formPaso2" novalidate>
+
+          <div class="form-group">
+            <label for="fechaChoque">Fecha del hecho:</label>
+            <input type="date" id="fechaChoque" name="fechaChoque" required>
+            <span class="error-message" id="fechaChoqueError"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="horaChoque">Hora del hecho:</label>
+            <input type="time" id="horaChoque" name="horaChoque" required>
+            <span class="error-message" id="horaChoqueError"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="lugarChoque">Lugar de ocurrencia:</label>
+            <input type="text" id="lugarChoque" name="lugarChoque" required>
+            <span class="error-message" id="lugarChoqueError"></span>
+          </div>
+
+          <!-- Provincia: por ahora solo Córdoba -->
+          <div class="form-group">
+            <label for="provincia">Provincia:</label>
+            <select id="provincia" name="provincia" required>
+              <option value="" disabled selected>Seleccione una provincia</option>
+              <option value="Córdoba">Córdoba</option>
+              <!-- ...otras provincias (comentadas) -->
+            </select>
+            <span class="error-message" id="provinciaError"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="localidad">Localidad:</label>
+            <input type="text" id="localidad" name="localidad" required>
+            <span class="error-message" id="localidadError"></span>
+          </div>
+
+          <!-- Patente: ABC123 o AB123CD -->
+          <div class="form-group">
+            <label for="patente">Patente de tu vehículo:</label>
+            <input type="text" id="patente" name="patente" required pattern="^([A-Z]{3}\d{3}|[A-Z]{2}\d{3}[A-Z]{2})$" title="Patente válida: ABC123 o AB123CD"/>
+            <span class="error-message" id="patenteError"></span>
+          </div>
+          
+          <div class="form-group">
+            <label for="aseguradora">Selecciona tu aseguradora:</label>
+            <select id="aseguradora" name="aseguradora" required>
+              <option value="" disabled selected>Seleccione una aseguradora</option>
+              <option value="Prudence Seguros">Prudence seguros</option>
+              <option value="Sancor Seguros">Sancor Seguros</option>
+              <option value="Triunfo Seguros">Triunfo Seguros</option>
+              <option value="Rio Uruguay Seguros">Rio Uruguay Seguros</option>
+              <option value="El Norte Seguros">El Norte Seguros</option>
+            </select>
+            <span class="error-message" id="aseguradoraError"></span>
+          </div>
+
+          <div class="buttons">
+              <button type="button" id="btnPaso2Anterior" class="btn-hero solid">Anterior</button>
+              <button type="button" id="btnPaso2" class="btn-hero solid">Siguiente</button>
+          </div>
+
+
+        </form>
+      </div>
+    </section>
+
+    <!-- Paso 3: datos de la otra parte -->
+    <section id="paso3" class="formulario" style="display: none;" aria-labelledby="tituloPaso3">
+      <div class="container">
+        <h1 id="tituloPaso3">Datos de la otra parte involucrada</h1>
+        <form id="formPaso3" novalidate>
+
+          <div class="form-group">
+            <label for="nombreInvolucrado">Nombre del involucrado:</label>
+            <input type="text" id="nombreInvolucrado" name="nombreInvolucrado" required>
+            <span class="error-message" id="nombreInvolucradoError"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="apellidoInvolucrado">Apellido del involucrado:</label>
+            <input type="text" id="apellidoInvolucrado" name="apellidoInvolucrado" required>
+            <span class="error-message" id="apellidoInvolucradoError"></span>
+          </div>
+
+          <!-- DNI/Cédula del involucrado: 8 dígitos -->
+          <div class="form-group">
+            <label for="documentoInvolucrado">Documento del involucrado (DNI o Cédula):</label>
+            <input type="text" id="documentoInvolucrado" name="documentoInvolucrado" required pattern="\d{8}">
+            <span class="error-message" id="documentoInvolucradoError"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="aseguradoraInvolucrado">Aseguradora del involucrado:</label>
+            <select id="aseguradoraInvolucrado" name="aseguradoraInvolucrado" required>
+              <option value="" disabled selected>Seleccione una aseguradora</option>
+              <option value="Prudence Seguros">Prudence seguros</option>
+              <option value="Sancor Seguros">Sancor Seguros</option>
+              <option value="Triunfo Seguros">Triunfo Seguros</option>
+              <option value="Rio Uruguay Seguros">Rio Uruguay Seguros</option>
+              <option value="El Norte Seguros">El Norte Seguros</option>
+            </select>
+            <span class="error-message" id="aseguradoraInvolucradoError"></span>
+          </div>
+
+          <!-- Patente del otro vehículo -->
+          <div class="form-group">
+            <label for="patenteInvolucrado">Patente del vehículo del involucrado:</label>
+            <input type="text" id="patenteInvolucrado" name="patenteInvolucrado" required pattern="^([A-Z]{3}\d{3}|[A-Z]{2}\d{3}[A-Z]{2})$" title="Patente válida: ABC123 o AB123CD"/>
+            <span class="error-message" id="patenteInvolucradoError"></span>
+          </div>
+          
+          <div class="buttons">
+              <button type="button" id="btnPaso3Anterior" class="btn-hero solid">Anterior</button>
+              <button type="button" id="btnPaso3" class="btn-hero solid">Siguiente</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Paso 4: daños + descripción -->
+    <section id="paso4" class="formulario" style="display: none;" aria-labelledby="tituloPaso4">
+      <div class="container">
+        <h1 id="tituloPaso4">Daños en el vehículo y descripción del accidente</h1>
+        <form id="formPaso4" novalidate>
+
+          <!-- Checkboxes de partes afectadas -->
+          <div class="form-group">
+            <label>Partes afectadas del vehículo:</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" name="partes" value="frontal"> Parte frontal</label>
+              <label><input type="checkbox" name="partes" value="trasera"> Parte trasera</label>
+              <label><input type="checkbox" name="partes" value="izquierda"> Lateral izquierdo</label>
+              <label><input type="checkbox" name="partes" value="derecha"> Lateral derecho</label>
+              <label><input type="checkbox" name="partes" value="techo"> Techo</label>
+              <label><input type="checkbox" name="partes" value="vidrios"> Vidrios</label>
+              <label><input type="checkbox" name="partes" value="ruedas"> Ruedas</label>
+              <label><input type="checkbox" name="partes" value="motor"> Motor</label>
+            </div>
+            <span class="error-message" id="partesError"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="descripcionAccidente">Descripción del accidente:</label>
+            <textarea id="descripcionAccidente" name="descripcionAccidente" rows="5" required></textarea>
+            <span class="error-message" id="descripcionAccidenteError"></span>
+          </div>
+
+          <div class="buttons">
+              <button type="button" id="btnPaso4Anterior" class="btn-hero solid">Anterior</button>
+              <button type="button" id="btnPaso4" class="btn-hero solid">Siguiente</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Paso 5: confirmación/envío -->
+
+    <section id="paso5" class="formulario" style="display: none;" aria-labelledby="tituloPaso5">
+
+      <div class="container">
+        <h1 id="tituloPaso5">Confirmación</h1>
+        <p>Estás a punto de concluir tu reclamo. Por favor, confirma para continuar.</p>
+
+        <!-- Mensajes de éxito/error del envío -->
+        <div id="mensajeReclamo"></div>
+
+        <div class="buttons">
+          <!-- scripts -->
+          <button type="button" id="btnPaso5Anterior" class="btn-hero solid">Anterior</button>
+          <button type="button" id="btnEnviarReclamo" class="btn-hero solid">Concluir Reclamo</button>
+          
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+</body>
+</html>
