@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Editar Reclamo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="estilos/styles.css">
-  <link rel="icon" type="image/png" href="img/ico.png">
+  <link rel="stylesheet" href="estilos/styles.css" />
+  <link rel="icon" type="image/png" href="img/siniestroya_ico.png" />
 </head>
 <body>
-  
   <div class="wrapper">
     <!-- ===== Sidebar ===== -->
     <aside class="sidebar">
@@ -17,132 +16,159 @@
         <i class="fas fa-car-crash"></i>
         <span>AdminReclamos</span>
       </div>
+
       <nav class="menu">
         <a href="index.html"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
         <a href="clientes.html"><i class="fas fa-users"></i><span>Clientes</span></a>
-        <!-- Ruta activa: Reclamos -->
         <a href="reclamos.html" class="active"><i class="fas fa-file-alt"></i><span>Reclamos</span></a>
       </nav>
     </aside>
 
     <!-- ===== Main ===== -->
     <div class="main">
-      <header class="main-header">
+      <header class="main-header edit-header">
         <h1><i class="fas fa-edit"></i> Editar Reclamo</h1>
-        <!-- Volver al listado -->
-        <button onclick="location.href='reclamos.html'" class="btn-hero solid">
-          <i class=""></i> Volver
+        <button type="button" data-nav-href="reclamos.html" class="btn-hero solid">
+          <i class="fas fa-arrow-left"></i> Volver
         </button>
       </header>
 
       <main class="container">
-        <!-- Form de edición  -->
-        <form id="form-editar" class="form-card">
-          
-          <input type="hidden" id="id" name="id">
+        <section class="editar-layout">
+          <!-- ===== Columna izquierda: FORM ===== -->
+          <form id="form-editar" class="form-card editar-form">
+            <input type="hidden" id="id" name="id" />
 
-          <!-- Fecha / Hora del incidente -->
-          <div class="grid-2">
-            <div>
-              <label for="fecha_incidente">Fecha del Incidente</label>
-              <input type="date" id="fecha_incidente" name="fecha_incidente" required>
-            </div>
-            <div>
-              <label for="hora_incidente">Hora</label>
-              <input type="time" id="hora_incidente" name="hora_incidente" required>
-            </div>
-          </div>
+            <section class="edit-group">
+              <h3 class="edit-group-title">Datos del siniestro</h3>
+              <div class="edit-group-body">
+                <div class="grid-2">
+                  <div>
+                    <label for="fecha_incidente">Fecha del Incidente</label>
+                    <input type="date" id="fecha_incidente" name="fecha_incidente" required />
+                  </div>
+                  <div>
+                    <label for="hora_incidente">Hora</label>
+                    <input type="time" id="hora_incidente" name="hora_incidente" required />
+                  </div>
+                </div>
 
-          <!-- Dirección -->
-          <label for="direccion">Dirección</label>
-          <input type="text" id="direccion" name="direccion" required>
+                <label for="direccion">Direccion</label>
+                <input type="text" id="direccion" name="direccion" required />
 
-          <!-- Provincia / Ciudad -->
-          <div class="grid-2">
-            <div>
-              <label for="provincia">Provincia</label>
-              <input type="text" id="provincia" name="provincia" required>
-            </div>
-            <div>
-              <label for="ciudad">Ciudad</label>
-              <input type="text" id="ciudad" name="ciudad" required>
-            </div>
-          </div>
+                <div class="grid-2">
+                  <div>
+                    <label for="provincia">Provincia</label>
+                    <input type="text" id="provincia" name="provincia" required />
+                  </div>
+                  <div>
+                    <label for="ciudad">Ciudad</label>
+                    <input type="text" id="ciudad" name="ciudad" required />
+                  </div>
+                </div>
 
-          <!-- Patente / Aseguradora -->
-          <div class="grid-2">
-            <div>
-              <label for="patente_vehiculo">Patente</label>
-              <input type="text" id="patente_vehiculo" name="patente_vehiculo" required>
-            </div>
-            <div>
-              <label for="compania_seguro">Aseguradora</label>
-              <input type="text" id="compania_seguro" name="compania_seguro" required>
-            </div>
-          </div>
+                <label for="descripcion_accidente">Descripcion</label>
+                <textarea id="descripcion_accidente" name="descripcion_accidente" rows="4" required></textarea>
+              </div>
+            </section>
 
-          <!-- Partes afectadas  -->
-          <label for="partes_afectadas">Partes Afectadas</label>
-          <input type="text" id="partes_afectadas" name="partes_afectadas" required>
+            <section class="edit-group">
+              <h3 class="edit-group-title">Vehículo asegurado</h3>
+              <div class="edit-group-body">
+                <div class="grid-2">
+                  <div>
+                    <label for="patente_vehiculo">Patente</label>
+                    <input type="text" id="patente_vehiculo" name="patente_vehiculo" required />
+                  </div>
+                  <div>
+                    <label for="compania_seguro">Aseguradora</label>
+                    <input type="text" id="compania_seguro" name="compania_seguro" required />
+                  </div>
+                </div>
 
-          <!-- Descripción del accidente -->
-          <label for="descripcion_accidente">Descripción</label>
-          <textarea id="descripcion_accidente" name="descripcion_accidente" rows="4" required></textarea>
+                <label for="partes_afectadas">Partes afectadas</label>
+                <input type="text" id="partes_afectadas" name="partes_afectadas" required />
+              </div>
+            </section>
 
-          <!-- Datos de la otra parte  -->
-          <div class="grid-2">
-            <div>
-              <label for="otro_nombre">Nombre Involucrado</label>
-              <input type="text" id="otro_nombre" name="otro_nombre" maxlength="100">
-            </div>
-            <div>
-              <label for="otro_apellido">Apellido Involucrado</label>
-              <input type="text" id="otro_apellido" name="otro_apellido" maxlength="100">
-            </div>
-          </div>
-          <div class="grid-2">
-            <div>
-              <label for="otro_dni">DNI Involucrado</label>
-              <input type="text" id="otro_dni" name="otro_dni" maxlength="20">
-            </div>
-            <div>
-              <label for="otro_patente">Patente Involucrado</label>
-              <input type="text" id="otro_patente" name="otro_patente" maxlength="20">
-            </div>
-          </div>
-          <div>
-            <label for="otro_compania_seguro">Aseguradora Involucrado</label>
-            <input type="text" id="otro_compania_seguro" name="otro_compania_seguro" maxlength="100">
-          </div>
+            <section class="edit-group">
+              <h3 class="edit-group-title">Tercero involucrado</h3>
+              <div class="edit-group-body">
+                <div class="grid-2">
+                  <div>
+                    <label for="otro_nombre">Nombre involucrado</label>
+                    <input type="text" id="otro_nombre" name="otro_nombre" maxlength="100" />
+                  </div>
+                  <div>
+                    <label for="otro_apellido">Apellido involucrado</label>
+                    <input type="text" id="otro_apellido" name="otro_apellido" maxlength="100" />
+                  </div>
+                </div>
 
-          <!-- Código / Estado -->
-          <div class="grid-2">
-            <div>
-              <label for="codigo_confirmacion">Código Confirmación</label>
-              <input type="text" id="codigo_confirmacion" name="codigo_confirmacion" required>
-            </div>
-            <div>
-              <label for="estado">Estado</label>
-              <select id="estado" name="estado" required>
-                <option value="" disabled selected>Seleccioná un estado…</option>
-                <option>Ingresado</option>
-                <option>En revisión</option>
-                <option>Aprobación</option>
-                <option>Reclamación</option>
-                <option>Gestión de pago</option>
-                <option>Reclamo finalizado</option>
-              </select>
-            </div>
-          </div>
+                <div class="grid-2">
+                  <div>
+                    <label for="otro_dni">DNI involucrado</label>
+                    <input type="text" id="otro_dni" name="otro_dni" maxlength="20" />
+                  </div>
+                  <div>
+                    <label for="otro_patente">Patente involucrado</label>
+                    <input type="text" id="otro_patente" name="otro_patente" maxlength="20" />
+                  </div>
+                </div>
 
-          
-          <button type="submit" class="btn-hero solid">Guardar Cambios</button>
-        </form>
+                <label for="otro_compania_seguro">Aseguradora involucrado</label>
+                <input type="text" id="otro_compania_seguro" name="otro_compania_seguro" maxlength="100" />
+              </div>
+            </section>
+
+            <section class="edit-group">
+              <h3 class="edit-group-title">Gestión</h3>
+              <div class="edit-group-body">
+                <div class="grid-2">
+                  <div>
+                    <label for="codigo_confirmacion">Código confirmación</label>
+                    <input type="text" id="codigo_confirmacion" name="codigo_confirmacion" required />
+                  </div>
+                  <div>
+                    <label for="estado">Estado</label>
+                    <select id="estado" name="estado" required>
+                      <option value="" disabled selected>Seleccioná un estado...</option>
+                      <option>Ingresado</option>
+                      <option>En revisión</option>
+                      <option>Aprobación</option>
+                      <option>Reclamación</option>
+                      <option>Gestión de pago</option>
+                      <option>Reclamo finalizado</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn-hero solid edit-save-btn">Guardar Cambios</button>
+              </div>
+            </section>
+          </form>
+
+          <!-- ===== Columna derecha: IMAGENES ===== -->
+          <aside class="form-card editar-imagenes">
+            <h2 class="imagenes-title">
+              <i class="fas fa-images"></i> Imagenes del reclamo
+            </h2>
+
+            <div id="imagenes-info" class="imagenes-info">
+              Cargando imagenes...
+            </div>
+
+            <div id="imagenes-reclamo" class="imagenes-grid">
+              <!-- aca el JS renderiza -->
+            </div>
+          </aside>
+        </section>
       </main>
     </div>
   </div>
 
-  <!-- Lógica admin  -->
   <script src="scripts/admin.js"></script>
 </body>
 </html>
+
+<!--Revisado em texto-->

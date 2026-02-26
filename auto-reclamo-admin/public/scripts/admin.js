@@ -1,7 +1,32 @@
 /* ------------------------ ADMIN.JS – Bootstrap y constantes ------------------------ */
 console.log('[admin] toasts cargados'); // debug: confirma que el archivo se cargó
 
-const BASE = 'http://localhost:3000/api';
+function normalizeBaseUrl(raw) {
+  return String(raw || '').trim().replace(/\/+$/, '');
+}
+
+function resolveApiBaseUrl() {
+  const fromWindow = normalizeBaseUrl(window.__API_BASE_URL__);
+  if (fromWindow) return fromWindow;
+
+  const meta = document.querySelector('meta[name="api-base-url"]');
+  const fromMeta = normalizeBaseUrl(meta ? meta.getAttribute('content') : '');
+  if (fromMeta) return fromMeta;
+
+  const host = String(location.hostname || '').toLowerCase();
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return 'http://localhost:3000';
+  }
+
+  if (host === 'siniestroya.com.ar' || host.endsWith('.siniestroya.com.ar')) {
+    return 'https://api.siniestroya.com.ar';
+  }
+
+  return '';
+}
+
+const PUBLIC_BASE = resolveApiBaseUrl();
+const BASE = PUBLIC_BASE ? `${PUBLIC_BASE}/api` : '/api';
 const API = {
   clientes:    ()       => `${BASE}/clientes`,
   cliente:     id       => `${BASE}/clientes/${id}`,
@@ -10,6 +35,88 @@ const API = {
   update:      (t, id)  => `${BASE}/${t}/${id}`,
   comentarios: id       => `${BASE}/reclamos/${id}/comentarios`
 };
+
+const LOGIN_PAGE = 'login.html';
+const ALLOWED_NEXT_PAGES = new Set([
+  'index.html',
+  'clientes.html',
+  'reclamos.html',
+  'editar.html',
+  'editar_cliente.html'
+]);
+
+function getCurrentPage() {
+  return location.pathname.split('/').pop() || 'index.html';
+}
+
+function clearAdminState() {
+  try {
+    sessionStorage.removeItem('clienteId');
+    sessionStorage.removeItem('clienteName');
+  } catch {}
+}
+
+function normalizeNextPage(rawNext) {
+  const fallback = 'index.html';
+  const next = String(rawNext || '').trim();
+  if (!next) return fallback;
+  if (next.includes('://') || next.startsWith('//')) return fallback;
+
+  const [pathPart, queryPart = ''] = next.split('?');
+  const page = (pathPart.split('/').pop() || '').trim();
+  if (!ALLOWED_NEXT_PAGES.has(page)) return fallback;
+
+  return queryPart ? `${page}?${queryPart}` : page;
+}
+
+function redirectToLogin() {
+  if (getCurrentPage() === LOGIN_PAGE) return;
+  const current = `${getCurrentPage()}${location.search || ''}`;
+  location.href = `${LOGIN_PAGE}?next=${encodeURIComponent(current || 'index.html')}`;
+}
+
+async function logoutAdmin() {
+  try {
+    await fetch(`${BASE}/admin/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+  } catch {}
+  clearAdminState();
+  redirectToLogin();
+}
+
+function ensureLogoutLink() {
+  const menu = document.querySelector('.menu');
+  if (!menu || menu.querySelector('[data-action="logout"]')) return;
+
+  const link = document.createElement('a');
+  link.href = '#';
+  link.dataset.action = 'logout';
+  link.innerHTML = `<i class="fas fa-right-from-bracket"></i><span>Salir</span>`;
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    logoutAdmin();
+  });
+  menu.appendChild(link);
+}
+
+async function ensureAdminSession() {
+  try {
+    const r = await fetch(`${BASE}/admin/me`, {
+      credentials: 'include'
+    });
+    if (!r.ok) {
+      clearAdminState();
+      redirectToLogin();
+      return false;
+    }
+    return true;
+  } catch {
+    toast('No se pudo verificar la sesion del admin.', 'error');
+    return false;
+  }
+}
 
 /* ------------------------ UTIL – QueryString y navegación de retorno ------------------------ */
 function getQS(name){
@@ -23,6 +130,7 @@ function goBackAfterEdit(){
   const from   = (getQS('from') || '').toLowerCase();
   const estado = getQS('estado') || '';
   const period = getQS('period') || getQS('mes') || '';
+  const page   = getQS('page') || '';
 
   // Base: lista general o por cliente
   let url = (from === 'all') ? 'reclamos.html?mode=all' : 'reclamos.html';
@@ -33,6 +141,7 @@ function goBackAfterEdit(){
     sp.set('mode', 'all');
     if (estado) sp.set('estado', estado);
     if (period) sp.set('period', period);
+    if (/^\d+$/.test(page) && Number(page) > 1) sp.set('page', page);
     url = `reclamos.html?${sp.toString()}`;
   }
 
@@ -67,11 +176,101 @@ function toast(message, type = 'success', ms = 2200) {
   }, ms);
 }
 
-/* ------------------------ FETCH – Helper JSON con manejo de errores ------------------------ */
+/* ------------------------ MODAL CONFIRMAR ELIMINACION ------------------------ */
+let deleteConfirmOpen = false;
+
+function ensureDeleteConfirmModal() {
+  let overlay = document.getElementById('confirm-delete-overlay');
+  if (overlay) return overlay;
+
+  overlay = document.createElement('div');
+  overlay.id = 'confirm-delete-overlay';
+  overlay.className = 'confirm-overlay';
+  overlay.setAttribute('hidden', 'hidden');
+  overlay.innerHTML = `
+    <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-delete-title" aria-describedby="confirm-delete-message">
+      <div class="confirm-dialog__icon" aria-hidden="true">
+        <i class="fas fa-triangle-exclamation"></i>
+      </div>
+      <h3 id="confirm-delete-title">Eliminar cliente</h3>
+      <p id="confirm-delete-message">Esta accion eliminara el cliente y todos sus reclamos.</p>
+      <div class="confirm-dialog__actions">
+        <button type="button" class="btn-hero outline alt confirm-cancel" id="confirm-delete-cancel">Cancelar</button>
+        <button type="button" class="btn-hero solid confirm-accept" id="confirm-delete-accept">Si, eliminar</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+function askDeleteConfirm({
+  title = 'Eliminar cliente',
+  message = 'Esta accion eliminara el cliente y todos sus reclamos. Esta accion no se puede deshacer.'
+} = {}) {
+  if (deleteConfirmOpen) return Promise.resolve(false);
+  deleteConfirmOpen = true;
+
+  const overlay = ensureDeleteConfirmModal();
+  const titleEl = overlay.querySelector('#confirm-delete-title');
+  const msgEl = overlay.querySelector('#confirm-delete-message');
+  const btnCancel = overlay.querySelector('#confirm-delete-cancel');
+  const btnAccept = overlay.querySelector('#confirm-delete-accept');
+
+  if (!titleEl || !msgEl || !btnCancel || !btnAccept) {
+    deleteConfirmOpen = false;
+    return Promise.resolve(false);
+  }
+
+  titleEl.textContent = title;
+  msgEl.textContent = message;
+  overlay.hidden = false;
+  overlay.classList.add('is-open');
+
+  return new Promise((resolve) => {
+    const close = (accepted) => {
+      overlay.classList.remove('is-open');
+      overlay.hidden = true;
+      deleteConfirmOpen = false;
+      overlay.removeEventListener('click', onOverlayClick);
+      document.removeEventListener('keydown', onKeyDown);
+      btnCancel.removeEventListener('click', onCancel);
+      btnAccept.removeEventListener('click', onAccept);
+      resolve(accepted);
+    };
+
+    const onCancel = () => close(false);
+    const onAccept = () => close(true);
+    const onOverlayClick = (e) => {
+      if (e.target === overlay) close(false);
+    };
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        close(false);
+      }
+    };
+
+    btnCancel.addEventListener('click', onCancel);
+    btnAccept.addEventListener('click', onAccept);
+    overlay.addEventListener('click', onOverlayClick);
+    document.addEventListener('keydown', onKeyDown);
+
+    btnCancel.focus();
+  });
+}
+
+/* ------------------------ FETCH - Helper JSON con manejo de errores ------------------------ */
 async function apiJson(url, opts = {}) {
-  const r = await fetch(url, opts);
+  const r = await fetch(url, {
+    ...opts,
+    credentials: 'include',
+    headers: opts.headers || {}
+  });
   if (r.status === 401) {
-    
+    clearAdminState();
+    redirectToLogin();
     throw new Error('No autorizado');
   }
   if (!r.ok) {
@@ -79,13 +278,66 @@ async function apiJson(url, opts = {}) {
     try { msg = (await r.json()).error || (await r.text()); } catch {}
     throw new Error(msg || 'Error');
   }
-  
   return r.status === 204 ? null : r.json();
 }
 
+/* ------------------------ DESCARGA ROBUSTA (NO navega) ------------------------ */
+function forceDownload(url, filename){
+  fetch(url, { credentials: 'include' })
+    .then(r => {
+      if (!r.ok) throw new Error('No se pudo descargar (HTTP ' + r.status + ')');
+      return r.blob();
+    })
+    .then(blob => {
+      const a = document.createElement('a');
+      const objUrl = URL.createObjectURL(blob);
+      a.href = objUrl;
+      a.download = filename || 'archivo';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
+    })
+    .catch(err => {
+      console.error(err);
+      toast('No se pudo descargar: ' + (err.message || 'Error'), 'error');
+    });
+}
+
+/* Útil para debug: muestra en consola si la URL da 404 */
+function debugImg(url){
+  fetch(url, { method: 'HEAD', credentials: 'include' })
+    .then(r => console.log('[IMG HEAD]', url, r.status))
+    .catch(e => console.log('[IMG HEAD ERROR]', url, e));
+}
+
+function bindStaticNavButtons() {
+  document.querySelectorAll('[data-nav-href]').forEach((btn) => {
+    if (btn.dataset.navBound === '1') return;
+    btn.dataset.navBound = '1';
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = String(btn.getAttribute('data-nav-href') || '').trim();
+      if (!target || target.includes('://') || target.startsWith('//')) return;
+      location.href = target;
+    });
+  });
+}
+
 /* ------------------------ ROUTER – Arranque por página ------------------------ */
-document.addEventListener('DOMContentLoaded', () => {
-  const page = location.pathname.split('/').pop();
+document.addEventListener('DOMContentLoaded', async () => {
+  const page = getCurrentPage();
+  bindStaticNavButtons();
+
+  if (page === LOGIN_PAGE) {
+    initLoginPage();
+    return;
+  }
+
+  const ok = await ensureAdminSession();
+  if (!ok) return;
+
+  ensureLogoutLink();
 
   if (!page || page === 'index.html') { actualizarEstadisticas(); }
   if (page === 'clientes.html')       { cargarClientes(); enlazarAccionesClientes(); }
@@ -93,6 +345,100 @@ document.addEventListener('DOMContentLoaded', () => {
   if (page === 'editar.html')         { cargarFormularioReclamo(); }
   if (page === 'editar_cliente.html') { cargarFormularioCliente(); }
 });
+
+async function initLoginPage() {
+  const form = document.getElementById('admin-login-form');
+  const emailInput = document.getElementById('admin-email');
+  const passInput = document.getElementById('admin-password');
+  const passToggleBtn = document.getElementById('admin-pass-toggle');
+  const passToggleIcon = passToggleBtn?.querySelector('i');
+  const errorBox = document.getElementById('admin-login-error');
+  const submitBtn = form?.querySelector('button[type="submit"]');
+  if (!form || !emailInput || !passInput || !errorBox || !submitBtn) return;
+
+  const next = normalizeNextPage(new URLSearchParams(location.search).get('next'));
+
+  try {
+    const r = await fetch(`${BASE}/admin/me`, { credentials: 'include' });
+    if (r.ok) {
+      location.href = next;
+      return;
+    }
+  } catch {}
+
+  const setInvalidInputs = (active) => {
+    emailInput.classList.toggle('is-invalid', active);
+    passInput.classList.toggle('is-invalid', active);
+  };
+
+  const showError = (message) => {
+    errorBox.hidden = !message;
+    errorBox.textContent = message || '';
+    setInvalidInputs(Boolean(message));
+  };
+
+  const clearInlineError = () => {
+    if (errorBox.hidden) return;
+    errorBox.hidden = true;
+    errorBox.textContent = '';
+    setInvalidInputs(false);
+  };
+
+  emailInput.addEventListener('input', clearInlineError);
+  passInput.addEventListener('input', clearInlineError);
+
+  if (passToggleBtn) {
+    passToggleBtn.addEventListener('click', () => {
+      const isVisible = passInput.type === 'text';
+      passInput.type = isVisible ? 'password' : 'text';
+      passToggleBtn.setAttribute('aria-pressed', String(!isVisible));
+      passToggleBtn.setAttribute('aria-label', isVisible ? 'Mostrar contrasena' : 'Ocultar contrasena');
+      if (passToggleIcon) {
+        passToggleIcon.classList.toggle('fa-eye', isVisible);
+        passToggleIcon.classList.toggle('fa-eye-slash', !isVisible);
+      }
+      passInput.focus();
+    });
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    showError('');
+
+    const email = String(emailInput.value || '').trim();
+    const password = String(passInput.value || '');
+    if (!email || !password) {
+      showError('Completa email y contrasena.');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.classList.add('is-loading');
+    const oldText = submitBtn.textContent.trim();
+    submitBtn.textContent = 'INICIANDO...';
+
+    try {
+      const r = await fetch(`${BASE}/admin/login`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const payload = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        throw new Error(payload?.error || 'Credenciales invalidas.');
+      }
+
+      location.href = next;
+    } catch (err) {
+      showError(err.message || 'No se pudo iniciar sesion.');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('is-loading');
+      submitBtn.textContent = oldText;
+    }
+  });
+}
 
 /* ------------------------ DASHBOARD – KPIs y conteos ------------------------ */
 async function actualizarEstadisticas() {
@@ -138,12 +484,10 @@ async function actualizarEstadisticas() {
       const k = normalizarEstado(r.estado);
       if (k in counts) counts[k]++;
 
-      
       const df = parseFecha(r);
       if (df && df.getMonth() === curMonth && df.getFullYear() === curYear) delMes++;
     }
 
-    
     setText('total-ingresado',    counts['ingresado']);
     setText('total-en-revision',  counts['en revision']);
     setText('total-aprobacion',   counts['aprobacion']);
@@ -163,33 +507,43 @@ async function cargarClientes() {
   const list  = await apiJson(API.clientes());
 
   // Renderiza filas
-  tbody.innerHTML = list.map(c => `
-    <tr>
-      <td>${c.id}</td>
-      <td>${c.nombre}</td>
-      <td>${c.apellido}</td>
-      <td>${c.dni}</td>
-      <td>${c.telefono || '-'}</td>
-      <td>${c.email}</td>
-      <td>
-        <div class="actions-group">
-          <button type="button" class="btn-hero solid action"
-                  data-action="reclamos" data-id="${c.id}"
-                  data-name="${c.nombre} ${c.apellido}">
-            Reclamos
-          </button>
-          <button type="button" class="btn-hero solid action"
-                  data-action="editar-cliente" data-id="${c.id}">
-            <i class="fas fa-edit"></i> Editar
-          </button>
-          <button type="button" class="btn-hero solid action"
-                  data-action="eliminar" data-id="${c.id}">
-            Eliminar
-          </button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = list.map((c) => {
+    const id = String(c.id ?? '');
+    const nombre = String(c.nombre ?? '');
+    const apellido = String(c.apellido ?? '');
+    const dni = String(c.dni ?? '');
+    const telefono = String(c.telefono ?? '-');
+    const email = String(c.email ?? '');
+    const nombreCompleto = `${nombre} ${apellido}`.trim();
+
+    return `
+      <tr>
+        <td>${escapeHTML(id)}</td>
+        <td>${escapeHTML(nombre)}</td>
+        <td>${escapeHTML(apellido)}</td>
+        <td>${escapeHTML(dni)}</td>
+        <td>${escapeHTML(telefono)}</td>
+        <td>${escapeHTML(email)}</td>
+        <td>
+          <div class="actions-group">
+            <button type="button" class="btn-hero solid action"
+                    data-action="reclamos" data-id="${escapeAttr(id)}"
+                    data-name="${escapeAttr(nombreCompleto)}">
+              Reclamos
+            </button>
+            <button type="button" class="btn-hero solid action"
+                    data-action="editar-cliente" data-id="${escapeAttr(id)}">
+              <i class="fas fa-edit"></i> Editar
+            </button>
+            <button type="button" class="btn-hero solid action"
+                    data-action="eliminar" data-id="${escapeAttr(id)}">
+              Eliminar
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 /* Delegación de eventos para las acciones de la tabla de clientes */
@@ -218,7 +572,11 @@ function enlazarAccionesClientes() {
           break;
 
         case 'eliminar': {
-          if (!confirm('¿Eliminar este cliente?')) return;
+          const okDelete = await askDeleteConfirm({
+            title: 'Eliminar cliente',
+            message: 'Se eliminara este cliente junto con todos sus reclamos. Esta accion no se puede deshacer.'
+          });
+          if (!okDelete) return;
 
           // Deshabilita botón mientras elimina
           const oldText = btn.textContent;
@@ -262,26 +620,34 @@ async function cargarReclamos() {
   // Carga y render
   const reclamos = await apiJson(API.reclamos(clienteId));
   const tbody    = document.querySelector('#tabla-reclamos tbody');
+  const clienteNameSafe = escapeHTML(clienteName);
 
-  tbody.innerHTML = reclamos.map(r => `
-    <tr>
-      <td>${r.id}</td>
-      <td>${clienteName}</td>
-      <td>${new Date(r.fecha_incidente).toLocaleDateString('es-AR')}</td>
-      <td>${r.hora_incidente}</td>
-      <td>${r.estado}</td>
-      <td>
-        <div class="actions-group">
-          <button class="btn-hero solid small btn-editar" data-id="${r.id}">
-             Detalles
-          </button>
-          <button class="btn-hero solid small btn-comentarios" data-id="${r.id}">
-             Comentarios
-          </button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = reclamos.map((r) => {
+    const id = String(r.id ?? '');
+    const fecha = r.fecha_incidente ? new Date(r.fecha_incidente).toLocaleDateString('es-AR') : '-';
+    const hora = String(r.hora_incidente ?? '-');
+    const estado = String(r.estado ?? '-');
+
+    return `
+      <tr>
+        <td>${escapeHTML(id)}</td>
+        <td>${clienteNameSafe}</td>
+        <td>${escapeHTML(fecha)}</td>
+        <td>${escapeHTML(hora)}</td>
+        <td>${escapeHTML(estado)}</td>
+        <td>
+          <div class="actions-group">
+            <button class="btn-hero solid small btn-editar" data-id="${escapeAttr(id)}">
+              Detalles
+            </button>
+            <button class="btn-hero solid small btn-comentarios" data-id="${escapeAttr(id)}">
+              Comentarios
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 
   // Navegar a edición
   tbody.querySelectorAll('.btn-editar').forEach(btn => {
@@ -311,9 +677,17 @@ async function cargarFormularioReclamo() {
 
   // Carga datos y los vuelca a inputs por id coincidente
   const r = await apiJson(API.reclamo(id));
+
   Object.entries(r).forEach(([k, v]) => {
     const el = document.getElementById(k);
     if (el) el.value = v;
+  });
+
+  // Cargar imágenes UNA sola vez
+  cargarImagenesReclamoAdmin(id).catch(err => {
+    console.error(err);
+    const info = document.getElementById('imagenes-info');
+    if (info) info.textContent = 'No se pudieron cargar imágenes.';
   });
 
   // Guardado
@@ -429,7 +803,7 @@ function renderComentarios(items){
     <li class="comentario-item">
       <div class="meta">
         <strong>${it.autor ? escapeHTML(it.autor) : 'Anónimo'}</strong>
-        · <span>${formatearFechaHora(it.creado_en)}</span>
+        · <span>${escapeHTML(formatearFechaHora(it.creado_en))}</span>
       </div>
       <div class="texto">${escapeHTML(it.texto || '')}</div>
     </li>
@@ -446,9 +820,13 @@ function formatearFechaHora(iso){
 
 /* Sanitiza texto libre para evitar XSS */
 function escapeHTML(s){
-  return (s || '').replace(/[&<>"']/g, m => ({
+  return String(s ?? '').replace(/[&<>"']/g, m => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   }[m]));
+}
+
+function escapeAttr(s){
+  return escapeHTML(s);
 }
 
 /* Enlaza eventos del modal  */
@@ -501,7 +879,8 @@ function routerReclamos(){
   const params     = new URLSearchParams(location.search);
   const mode       = (params.get('mode') || '').toLowerCase();
   const estadoQS   = params.get('estado') || '';
-  const periodQS   = (params.get('period') || params.get('mes') || '').toLowerCase();
+  const periodQS   = (params.get('period') || params.get('mes') || '');
+  const pageQS     = Number.parseInt(params.get('page') || '1', 10);
 
   const clienteId  = sessionStorage.getItem('clienteId');
 
@@ -511,7 +890,7 @@ function routerReclamos(){
   }
 
   if (mode === 'all' || !clienteId){
-    cargarReclamosGeneral({ estadoQS, periodQS }).catch(err => {
+    cargarReclamosGeneral({ estadoQS, periodQS, pageQS }).catch(err => {
       console.error(err);
       if (typeof toast === 'function') toast(err.message || 'No se pudo cargar reclamos', 'error');
     });
@@ -525,6 +904,10 @@ function routerReclamos(){
 /* Cache local de reclamos y mapa de clientes para pintar rápido */
 let RECLAMOS_CACHE = [];
 let CLIENTES_MAP   = {};
+const RECLAMOS_PAGE_SIZE = 20;
+let RECLAMOS_PAGE = 1;
+let RECLAMOS_TOTAL = 0;
+let RECLAMOS_TOTAL_PAGES = 1;
 
 /* Claves para guardar filtros entre navegaciones */
 const STORAGE_FILTRO_ESTADO  = 'reclamosFiltroEstado';
@@ -575,13 +958,197 @@ function isEsteMes(r) {
   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
 }
 
+function getPeriodoKeyFromDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+}
+
+function getPeriodoKeyFromReclamo(r) {
+  const d = parseFecha(r);
+  if (!d) return '';
+  return getPeriodoKeyFromDate(d);
+}
+
+function formatPeriodoLabel(periodoKey) {
+  const m = /^(\d{4})-(\d{2})$/.exec(String(periodoKey || ''));
+  if (!m) return String(periodoKey || '');
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = new Date(y, mo - 1, 1);
+  const raw = d.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
+function normalizePeriodoFilterValue(raw) {
+  const v = String(raw || '').trim().toLowerCase();
+  if (!v) return '';
+  if (['mes', 'actual', 'este-mes', 'this-month'].includes(v)) {
+    return getPeriodoKeyFromDate(new Date());
+  }
+  if (/^\d{4}-\d{2}$/.test(v)) return v;
+  return '';
+}
+
+function buildPeriodoCountMap(reclamos) {
+  const counts = new Map();
+  (reclamos || []).forEach((r) => {
+    const key = getPeriodoKeyFromReclamo(r);
+    if (!key) return;
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+  return counts;
+}
+
+function buildPeriodoRangeKeys(reclamos) {
+  const startYear = 2026;
+  let endYear = new Date().getFullYear();
+
+  (reclamos || []).forEach((r) => {
+    const d = parseFecha(r);
+    if (!d) return;
+    if (d.getFullYear() > endYear) {
+      endYear = d.getFullYear();
+    }
+  });
+
+  if (endYear < startYear) endYear = startYear;
+
+  const keys = [];
+  for (let y = endYear; y >= startYear; y--) {
+    for (let m = 12; m >= 1; m--) {
+      keys.push(`${y}-${String(m).padStart(2, '0')}`);
+    }
+  }
+  return keys;
+}
+
+function populatePeriodoOptions(reclamos, selectedPeriodo = '') {
+  const selPeriodo = document.getElementById('filtro-periodo');
+  if (!selPeriodo) return;
+
+  const options = buildPeriodoRangeKeys(reclamos);
+  selPeriodo.innerHTML = '';
+
+  const allOpt = document.createElement('option');
+  allOpt.value = '';
+  allOpt.textContent = 'Todos';
+  selPeriodo.appendChild(allOpt);
+
+  options.forEach((key) => {
+    const o = document.createElement('option');
+    o.value = key;
+    o.textContent = formatPeriodoLabel(key);
+    selPeriodo.appendChild(o);
+  });
+
+  const normalized = normalizePeriodoFilterValue(selectedPeriodo);
+  const exists = options.includes(normalized);
+  selPeriodo.value = exists ? normalized : '';
+}
+
+function updatePeriodoResumen({ periodo = '', totalMostrados = 0 }) {
+  const box = document.getElementById('periodo-resumen');
+  if (!box) return;
+
+  const n = Number(totalMostrados || 0);
+  if (!periodo) {
+    box.textContent = `Reclamos filtrados: ${n}`;
+    return;
+  }
+
+  box.textContent = `${formatPeriodoLabel(periodo)}: ${n} reclamos`;
+}
+
+function ensurePaginacionReclamos() {
+  const tabla = document.getElementById('tabla-reclamos');
+  if (!tabla || !tabla.parentElement) return null;
+
+  let wrapper = document.getElementById('reclamos-paginacion');
+  if (wrapper) return wrapper;
+
+  wrapper = document.createElement('section');
+  wrapper.id = 'reclamos-paginacion';
+  wrapper.className = 'reclamos-pagination';
+  tabla.insertAdjacentElement('afterend', wrapper);
+  return wrapper;
+}
+
+function syncReclamosListQuery({ estado = '', periodo = '', page = 1 } = {}) {
+  const url = new URL(location.href);
+  url.searchParams.set('mode', 'all');
+
+  if (estado) url.searchParams.set('estado', estado);
+  else url.searchParams.delete('estado');
+
+  if (periodo) url.searchParams.set('period', periodo);
+  else {
+    url.searchParams.delete('period');
+    url.searchParams.delete('mes');
+  }
+
+  if (page > 1) url.searchParams.set('page', String(page));
+  else url.searchParams.delete('page');
+
+  history.replaceState(null, '', url);
+}
+
+function renderPaginacionReclamos() {
+  const wrap = ensurePaginacionReclamos();
+  if (!wrap) return;
+
+  wrap.innerHTML = '';
+
+  const info = document.createElement('div');
+  info.className = 'reclamos-pagination__info';
+
+  const from = RECLAMOS_TOTAL === 0 ? 0 : ((RECLAMOS_PAGE - 1) * RECLAMOS_PAGE_SIZE + 1);
+  const to = RECLAMOS_TOTAL === 0 ? 0 : Math.min(RECLAMOS_TOTAL, RECLAMOS_PAGE * RECLAMOS_PAGE_SIZE);
+  info.textContent = `Mostrando ${from}-${to} de ${RECLAMOS_TOTAL}`;
+
+  const controls = document.createElement('div');
+  controls.className = 'reclamos-pagination__controls';
+
+  const btnPrev = document.createElement('button');
+  btnPrev.type = 'button';
+  btnPrev.className = 'btn-hero solid small';
+  btnPrev.textContent = 'Anterior';
+  btnPrev.disabled = RECLAMOS_PAGE <= 1;
+  btnPrev.addEventListener('click', () => {
+    if (RECLAMOS_PAGE <= 1) return;
+    aplicarYRenderFiltro({ page: RECLAMOS_PAGE - 1 });
+  });
+
+  const pageBadge = document.createElement('span');
+  pageBadge.className = 'reclamos-pagination__page';
+  pageBadge.textContent = `Pagina ${RECLAMOS_PAGE} de ${RECLAMOS_TOTAL_PAGES}`;
+
+  const btnNext = document.createElement('button');
+  btnNext.type = 'button';
+  btnNext.className = 'btn-hero solid small';
+  btnNext.textContent = 'Siguiente';
+  btnNext.disabled = RECLAMOS_PAGE >= RECLAMOS_TOTAL_PAGES;
+  btnNext.addEventListener('click', () => {
+    if (RECLAMOS_PAGE >= RECLAMOS_TOTAL_PAGES) return;
+    aplicarYRenderFiltro({ page: RECLAMOS_PAGE + 1 });
+  });
+
+  controls.appendChild(btnPrev);
+  controls.appendChild(pageBadge);
+  controls.appendChild(btnNext);
+
+  wrap.appendChild(info);
+  wrap.appendChild(controls);
+}
+
 /* Carga la vista general de reclamos con barra de filtros */
-async function cargarReclamosGeneral({ estadoQS = '', periodQS = '' } = {}) {
+async function cargarReclamosGeneral({ estadoQS = '', periodQS = '', pageQS = 1 } = {}) {
   const title = document.getElementById('titulo-reclamos');
   if (title) title.textContent = 'Reclamos – Todos';
 
   // Asegura que la barra de filtros exista
   ensureBarraFiltros();
+  ensurePaginacionReclamos();
 
   // Selects (ya existen después de ensureBarraFiltros)
   const selEstado  = document.getElementById('filtro-estado');
@@ -589,7 +1156,7 @@ async function cargarReclamosGeneral({ estadoQS = '', periodQS = '' } = {}) {
 
   // 1) valores desde querystring (si vienen)
   let estado  = (estadoQS || '').toLowerCase();
-  let periodo = (periodQS || '').toLowerCase();
+  let periodo = periodQS || '';
 
   // 2) si no vino nada en la URL, usamos lo guardado en sesión
   try {
@@ -601,26 +1168,13 @@ async function cargarReclamosGeneral({ estadoQS = '', periodQS = '' } = {}) {
       const savedPeriodo = sessionStorage.getItem(STORAGE_FILTRO_PERIODO);
       if (savedPeriodo !== null) periodo = savedPeriodo;
     }
-  } catch (e) {
-    // si falla sessionStorage (modo incógnito raro), simplemente seguimos
-  }
-
-  // normalizar valores de periodo
-  if (periodo && ['mes', 'actual', 'este-mes', 'this-month'].includes(periodo)) {
-    periodo = 'mes';
-  }
-
-  if (selEstado)  selEstado.value  = estado;
-  if (selPeriodo) selPeriodo.value = periodo;
+  } catch (e) {}
 
   // Carga reclamos + clientes en paralelo
-  const [reclamos, clientes] = await Promise.all([
-    apiJson(`${BASE}/reclamos`),
-    apiJson(API.clientes())
-  ]);
+  const clientes = await apiJson(API.clientes());
 
   // Cachea y arma mapa de cliente_id → nombre
-  RECLAMOS_CACHE = Array.isArray(reclamos) ? reclamos : [];
+  RECLAMOS_CACHE = [];
 
   CLIENTES_MAP = {};
   (Array.isArray(clientes) ? clientes : []).forEach(c => {
@@ -628,8 +1182,18 @@ async function cargarReclamosGeneral({ estadoQS = '', periodQS = '' } = {}) {
     CLIENTES_MAP[c.id] = nombre || `Cliente #${c.id}`;
   });
 
+  const periodoNormalizado = normalizePeriodoFilterValue(periodo);
+  populatePeriodoOptions([], periodoNormalizado);
+
+  if (selEstado)  selEstado.value  = estado;
+  if (selPeriodo) selPeriodo.value = periodoNormalizado && selPeriodo.querySelector(`option[value="${periodoNormalizado}"]`)
+    ? periodoNormalizado
+    : '';
+
+  const initialPage = Number.isFinite(pageQS) && pageQS > 0 ? pageQS : 1;
+
   // Aplica el filtro actual (estado/periodo) y pinta la tabla
-  aplicarYRenderFiltro();
+  await aplicarYRenderFiltro({ page: initialPage });
 }
 
 /* Inserta la barra de filtros sobre la tabla si no existe */
@@ -657,8 +1221,9 @@ function ensureBarraFiltros() {
       <label for="filtro-periodo">Periodo</label>
       <select id="filtro-periodo">
         <option value="">Todos</option>
-        <option value="mes">Este mes</option>
       </select>
+
+      <div id="periodo-resumen" class="periodo-resumen" aria-live="polite">Reclamos mostrados: 0</div>
 
       <button type="button" id="btn-limpiar-filtros" class="btn-hero solid">LIMPIAR</button>
     </div>
@@ -670,70 +1235,72 @@ function ensureBarraFiltros() {
   const selPeriodo = wrapper.querySelector('#filtro-periodo');
   const btnLimpiar = wrapper.querySelector('#btn-limpiar-filtros');
 
-  if (selEstado) {
-    selEstado.addEventListener('change', () => {
-      aplicarYRenderFiltro();
-    });
-  }
-
-  if (selPeriodo) {
-    selPeriodo.addEventListener('change', () => {
-      aplicarYRenderFiltro();
-    });
-  }
+  if (selEstado) selEstado.addEventListener('change', () => { aplicarYRenderFiltro({ page: 1 }); });
+  if (selPeriodo) selPeriodo.addEventListener('change', () => { aplicarYRenderFiltro({ page: 1 }); });
 
   if (btnLimpiar) {
     btnLimpiar.addEventListener('click', () => {
       if (selEstado)  selEstado.value  = '';
       if (selPeriodo) selPeriodo.value = '';
 
-      // limpiamos también lo que tengamos guardado en sesión
       try {
         sessionStorage.removeItem(STORAGE_FILTRO_ESTADO);
         sessionStorage.removeItem(STORAGE_FILTRO_PERIODO);
       } catch (e) {}
 
-      aplicarYRenderFiltro();
+      aplicarYRenderFiltro({ page: 1 });
 
       // Limpia QS visibles en la URL
       const url = new URL(location.href);
       url.searchParams.delete('estado');
       url.searchParams.delete('period');
       url.searchParams.delete('mes');
+      url.searchParams.delete('page');
       history.replaceState(null, '', url);
     });
   }
 }
 
 /* Aplica filtros seleccionados y vuelve a renderizar filas */
-function aplicarYRenderFiltro() {
+async function aplicarYRenderFiltro({ page = 1 } = {}) {
   const selEstado  = document.getElementById('filtro-estado');
   const selPeriodo = document.getElementById('filtro-periodo');
   const estado  = selEstado ? selEstado.value : '';
-  const periodo = selPeriodo ? selPeriodo.value : '';
+  const periodo = normalizePeriodoFilterValue(selPeriodo ? selPeriodo.value : '');
+  const pageSafe = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
 
-  // Guardamos último filtro elegido en sessionStorage
   try {
     sessionStorage.setItem(STORAGE_FILTRO_ESTADO, estado);
     sessionStorage.setItem(STORAGE_FILTRO_PERIODO, periodo);
   } catch (e) {}
 
-  let data = RECLAMOS_CACHE;
+  const qs = new URLSearchParams();
+  qs.set('page', String(pageSafe));
+  qs.set('limit', String(RECLAMOS_PAGE_SIZE));
+  if (estado) qs.set('estado', estado);
+  if (periodo) qs.set('periodo', periodo);
 
-  // Filtro por estado (normalizado)
-  if (estado) {
-    const eNorm = normalizarEstado(estado);
-    data = data.filter(r => normalizarEstado(r.estado) === eNorm);
+  try {
+    const payload = await apiJson(`${BASE}/reclamos?${qs.toString()}`);
+    const items = Array.isArray(payload) ? payload : (Array.isArray(payload.items) ? payload.items : []);
+    const total = Array.isArray(payload) ? items.length : Number(payload.total || 0);
+    const totalPages = Array.isArray(payload) ? 1 : Number(payload.totalPages || 1);
+    const currentPage = Array.isArray(payload) ? pageSafe : Number(payload.page || pageSafe);
+
+    RECLAMOS_CACHE = items;
+    RECLAMOS_TOTAL = Number.isFinite(total) ? total : items.length;
+    RECLAMOS_TOTAL_PAGES = Math.max(1, Number.isFinite(totalPages) ? totalPages : 1);
+    RECLAMOS_PAGE = Math.min(Math.max(1, currentPage), RECLAMOS_TOTAL_PAGES);
+
+    renderReclamosGeneralRows(items);
+    updatePeriodoResumen({ periodo, totalMostrados: RECLAMOS_TOTAL });
+    renderPaginacionReclamos();
+    syncReclamosListQuery({ estado, periodo, page: RECLAMOS_PAGE });
+  } catch (err) {
+    console.error('Error al filtrar/paginar reclamos:', err);
+    toast(err.message || 'No se pudo cargar reclamos', 'error');
   }
-
-  // Filtro por periodo (este mes)
-  if (periodo === 'mes') {
-    data = data.filter(isEsteMes);
-  }
-
-  renderReclamosGeneralRows(data);
 }
-
 
 /* Dibuja las filas de la tabla en la vista general y enlaza acciones */
 function renderReclamosGeneralRows(lista){
@@ -741,23 +1308,26 @@ function renderReclamosGeneralRows(lista){
   if (!tbody) return;
 
   tbody.innerHTML = (lista || []).map(r => {
+    const idRaw = String(r.id ?? '');
+    const idText = escapeHTML(idRaw);
+    const idAttr = escapeAttr(idRaw);
     const clienteName = escapeHTML(CLIENTES_MAP[r.cliente_id] || `Cliente #${r.cliente_id || ''}`);
     const d = parseFecha(r);
-    const fecha = d ? d.toLocaleDateString('es-AR') : '-';
+    const fecha = escapeHTML(d ? d.toLocaleDateString('es-AR') : '-');
     const hora   = escapeHTML(r.hora_incidente || r.hora || '-');
     const estado = escapeHTML(r.estado || '-');
 
     return `
       <tr>
-        <td>${r.id}</td>
+        <td>${idText}</td>
         <td>${clienteName}</td>
         <td>${fecha}</td>
         <td>${hora}</td>
         <td>${estado}</td>
         <td>
           <div class="actions-group">
-            <button class="btn-hero solid small btn-editar" data-id="${r.id}">Detalles</button>
-            <button class="btn-hero solid small btn-comentarios" data-id="${r.id}">Comentarios</button>
+            <button class="btn-hero solid small btn-editar" data-id="${idAttr}">Detalles</button>
+            <button class="btn-hero solid small btn-comentarios" data-id="${idAttr}">Comentarios</button>
           </div>
         </td>
       </tr>
@@ -769,33 +1339,137 @@ function renderReclamosGeneralRows(lista){
     btn.addEventListener('click', () => {
       const id = btn.dataset.id;
 
-      // Lee filtros actuales del select
       const estadoSel  = document.getElementById('filtro-estado')?.value || '';
       const periodoSel = document.getElementById('filtro-periodo')?.value || '';
 
       const qs = new URLSearchParams();
       qs.set('id', id);
-      qs.set('from', 'all');          // origen: vista general
-      if (estadoSel)  qs.set('estado', estadoSel);     // preserva estado
-      if (periodoSel) qs.set('period', periodoSel);    // preserva periodo (ej. 'mes')
+      qs.set('from', 'all');
+      if (estadoSel)  qs.set('estado', estadoSel);
+      if (periodoSel) qs.set('period', periodoSel);
+      if (RECLAMOS_PAGE > 1) qs.set('page', String(RECLAMOS_PAGE));
 
       location.href = `editar.html?${qs.toString()}`;
     });
   });
 
-  // Comentarios → abre modal
+  // Comentarios
   tbody.querySelectorAll('.btn-comentarios').forEach(btn => {
     btn.addEventListener('click', () => abrirModalComentarios(btn.dataset.id));
   });
 }
 
+/* ------------------------ IMÁGENES – Ver y descargar en editar.html ------------------------ */
+async function cargarImagenesReclamoAdmin(reclamoId){
+  const cont = document.getElementById('imagenes-reclamo');
+  const info = document.getElementById('imagenes-info');
+  if (!cont || !info) return;
+
+  const toSafeAbsoluteUrl = (rawUrl) => {
+    try {
+      const u = new URL(String(rawUrl || ''), window.location.origin);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') return '';
+      return u.toString();
+    } catch {
+      return '';
+    }
+  };
+
+  info.textContent = 'Cargando imágenes...';
+  cont.innerHTML = '';
+
+  const list = await apiJson(`${BASE}/reclamos/${encodeURIComponent(reclamoId)}/imagenes`);
+
+  if (!Array.isArray(list) || list.length === 0) {
+    info.textContent = 'Este reclamo no tiene imágenes cargadas.';
+    return;
+  }
+
+  info.textContent = `Imágenes encontradas: ${list.length}`;
+
+  cont.innerHTML = list.map((img, idx) => {
+    const viewPath = img.view_url || img.url || '';
+    const downloadPath = img.download_url || viewPath;
+    const fullViewUrl = viewPath.startsWith('http') ? viewPath : (PUBLIC_BASE + viewPath);
+    const fullDownloadUrl = downloadPath.startsWith('http') ? downloadPath : (PUBLIC_BASE + downloadPath);
+    const safeViewUrl = toSafeAbsoluteUrl(fullViewUrl);
+    const safeDownloadUrl = toSafeAbsoluteUrl(fullDownloadUrl);
+
+    const filename = escapeHTML(img.filename || `imagen_${idx+1}`);
+    const tag = img.tag ? escapeHTML(String(img.tag)) : '';
+    const meta = tag ? `<div style="font-size:12px;color:#666;margin-top:6px;">${tag}</div>` : '';
+
+    // debugImg(fullViewUrl); // descomenta si quieres ver status en consola
+
+    return `
+  <div class="img-card">
+    <div class="img-thumb">
+      <img src="${escapeAttr(safeViewUrl)}"
+           alt="${filename}"
+           class="js-reclamo-img">
+    </div>
+
+    <div class="img-body">
+      ${meta}
+
+      <div class="img-actions">
+        <button
+          type="button"
+          class="btn-hero solid small js-img-view"
+          data-view-url="${escapeAttr(safeViewUrl)}"
+        >
+          <i class="fas fa-eye"></i> Ver
+        </button>
+
+        <button
+          type="button"
+          class="btn-hero solid small js-img-download"
+          data-download-url="${escapeAttr(safeDownloadUrl)}"
+          data-filename="${escapeAttr(filename)}"
+        >
+          <i class="fas fa-download"></i> Descargar
+        </button>
+      </div>
+    </div>
+  </div>
+`;
+  }).join('');
+
+  cont.querySelectorAll('.js-reclamo-img').forEach((imgEl) => {
+    imgEl.addEventListener('error', () => {
+      const parent = imgEl.parentElement;
+      if (!parent) return;
+      imgEl.style.display = 'none';
+      parent.innerHTML = "<div style='padding:12px;color:#777;'>No se pudo mostrar la imagen</div>";
+    }, { once: true });
+  });
+
+  cont.querySelectorAll('.js-img-view').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const url = toSafeAbsoluteUrl(btn.dataset.viewUrl || '');
+      if (!url) {
+        toast('No se pudo abrir la imagen.', 'error');
+        return;
+      }
+      window.open(url, '_blank', 'noopener,noreferrer');
+    });
+  });
+
+  cont.querySelectorAll('.js-img-download').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const url = toSafeAbsoluteUrl(btn.dataset.downloadUrl || '');
+      const filename = String(btn.dataset.filename || 'imagen');
+      if (!url) {
+        toast('No se pudo descargar la imagen.', 'error');
+        return;
+      }
+      forceDownload(url, filename);
+    });
+  });
+}
 
 
-
-
-
-
-
+/*<!--Revisado em texto-->*/
 
 /* Cache local de reclamos y mapa de clientes para pintar rápido 
 let RECLAMOS_CACHE = [];
@@ -1117,3 +1791,6 @@ function aplicarYRenderFiltro(){
 }
 
 */
+
+
+

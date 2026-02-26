@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Login Admin - SiniestroYa</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="estilos/styles.css">
+  <link rel="icon" type="image/png" href="img/siniestroya_ico.png">
+</head>
+<body class="login-body">
+  <main class="admin-login-panel">
+    <section class="admin-login-card">
+      <header class="admin-login-head">
+        <h1><span>Siniestro</span><span class="accent">Ya</span></h1>
+        <p>Acceso al panel de administracion</p>
+      </header>
+
+      <form id="admin-login-form" class="admin-login-form" novalidate>
+        <label for="admin-email">Correo electronico</label>
+        <div class="admin-login-input-wrap">
+          <i class="fas fa-envelope" aria-hidden="true"></i>
+          <input
+            type="email"
+            id="admin-email"
+            name="email"
+            autocomplete="username"
+            required
+            placeholder="admin@siniestroya.com"
+          >
+        </div>
+
+        <label for="admin-password">Contrasena</label>
+        <div class="admin-login-input-wrap">
+          <i class="fas fa-lock" aria-hidden="true"></i>
+          <input
+            type="password"
+            id="admin-password"
+            name="password"
+            autocomplete="current-password"
+            required
+            placeholder="Ingresa tu contrasena"
+          >
+          <button
+            type="button"
+            id="admin-pass-toggle"
+            class="admin-login-pass-toggle"
+            aria-label="Mostrar contrasena"
+            aria-pressed="false"
+            aria-controls="admin-password"
+          >
+            <i class="fas fa-eye" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <p id="admin-login-error" class="admin-login-error" hidden></p>
+
+        <button type="submit" class="btn-hero solid admin-login-submit">
+          INICIAR SESION
+        </button>
+      </form>
+    </section>
+  </main>
+
+  <script src="scripts/admin.js"></script>
+</body>
+</html>
